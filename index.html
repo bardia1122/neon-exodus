@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NEON EXODUS</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:100%; height:100%; overflow:hidden; background:#000; font-family:'Segoe UI', monospace; user-select:none; }
+  #c { display:block; width:100%; height:100%; }
+
+  /* ---------- HUD ---------- */
+  #hud { position:fixed; inset:0; pointer-events:none; display:none; }
+  .hud-on #hud { display:block; }
+
+  #crosshair { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); }
+  #crosshair span { position:absolute; background:#9ff; box-shadow:0 0 4px #0ff; }
+  #crosshair .h1 { width:10px; height:2px; left:-16px; top:-1px; }
+  #crosshair .h2 { width:10px; height:2px; left:6px;  top:-1px; }
+  #crosshair .v1 { width:2px; height:10px; left:-1px; top:-16px; }
+  #crosshair .v2 { width:2px; height:10px; left:-1px; top:6px; }
+  #hitmark { position:absolute; left:50%; top:50%; width:18px; height:18px; transform:translate(-50%,-50%) rotate(45deg); border:2px solid #ff5; opacity:0; }
+
+  #vitals { position:absolute; left:24px; bottom:20px; }
+  #hpbar { width:240px; height:14px; border:1px solid #2ff; background:rgba(0,40,50,.5); }
+  #hpfill { height:100%; width:100%; background:linear-gradient(90deg,#0a8,#3fd); transition:width .15s; }
+  #hptext { color:#9ff; font-size:13px; letter-spacing:2px; margin-top:4px; text-shadow:0 0 6px #0ff; }
+
+  #ammo { position:absolute; right:24px; bottom:20px; text-align:right; color:#fda; text-shadow:0 0 8px #f80; }
+  #ammoCount { font-size:42px; font-weight:bold; line-height:1; }
+  #weaponName { font-size:14px; letter-spacing:3px; color:#fc8; }
+
+  #weaponList { position:absolute; right:24px; bottom:96px; text-align:right; font-size:11px; letter-spacing:2px; }
+  #weaponList div { color:#456; margin:2px 0; }
+  #weaponList div.owned { color:#8ac; }
+  #weaponList div.active { color:#ff8; text-shadow:0 0 6px #f80; }
+
+  #objective { position:absolute; top:18px; left:50%; transform:translateX(-50%); color:#9fd; font-size:14px; letter-spacing:3px; text-shadow:0 0 8px #0ff; text-align:center; }
+  #sectorLabel { position:absolute; top:40px; left:50%; transform:translateX(-50%); color:#578; font-size:11px; letter-spacing:4px; }
+
+  #killfeed { position:absolute; left:24px; top:60px; font-size:12px; color:#7c9; }
+  #killfeed div { margin:2px 0; text-shadow:0 0 4px #0f8; }
+
+  #vignette { position:absolute; inset:0; box-shadow:inset 0 0 180px rgba(255,0,40,0); transition:box-shadow .25s; }
+  #pickupFlash { position:absolute; inset:0; background:rgba(80,255,180,0); transition:background .3s; }
+
+  #announce { position:absolute; left:50%; top:35%; transform:translate(-50%,-50%); color:#ffd; font-size:34px;
+    letter-spacing:8px; text-shadow:0 0 24px #fa0; opacity:0; transition:opacity .4s; text-align:center; }
+  #announceSub { font-size:14px; letter-spacing:4px; color:#fc8; margin-top:10px; }
+
+  /* ---------- Screens ---------- */
+  .screen { position:fixed; inset:0; background:radial-gradient(ellipse at center,#03121a 0%,#000 80%); display:flex;
+    flex-direction:column; align-items:center; justify-content:center; z-index:10; text-align:center; }
+  .screen h1 { color:#3ef; font-size:56px; letter-spacing:14px; text-shadow:0 0 30px #0cf, 0 0 80px #08a; margin-bottom:10px; }
+  .screen h2 { color:#fa3; font-size:24px; letter-spacing:8px; text-shadow:0 0 20px #f60; margin-bottom:18px; }
+  .screen p { color:#9bc; max-width:560px; line-height:1.7; font-size:15px; margin-bottom:8px; }
+  .screen .key { color:#ff8; }
+  .btn { margin-top:28px; padding:14px 52px; font-size:18px; letter-spacing:6px; color:#0ff; background:transparent;
+    border:1px solid #0cc; cursor:pointer; text-shadow:0 0 10px #0ff; transition:all .2s; font-family:inherit; }
+  .btn:hover { background:rgba(0,255,255,.12); box-shadow:0 0 24px rgba(0,255,255,.4); }
+  #storyText { color:#cde; font-size:17px; line-height:2; max-width:620px; min-height:120px; white-space:pre-line; }
+  .hidden { display:none !important; }
+  #controlsHint { margin-top:30px; font-size:12px; color:#567; letter-spacing:2px; line-height:2; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="hud">
+  <div id="vignette"></div>
+  <div id="pickupFlash"></div>
+  <div id="crosshair"><span class="h1"></span><span class="h2"></span><span class="v1"></span><span class="v2"></span></div>
+  <div id="hitmark"></div>
+  <div id="vitals">
+    <div id="hpbar"><div id="hpfill"></div></div>
+    <div id="hptext">INTEGRITY 100</div>
+  </div>
+  <div id="ammo">
+    <div id="ammoCount">&infin;</div>
+    <div id="weaponName">PULSE PISTOL</div>
+  </div>
+  <div id="weaponList"></div>
+  <div id="objective"></div>
+  <div id="sectorLabel"></div>
+  <div id="killfeed"></div>
+  <div id="announce"><span id="announceMain"></span><div id="announceSub"></div></div>
+</div>
+
+<div id="menuScreen" class="screen">
+  <h1>NEON EXODUS</h1>
+  <p style="color:#678;letter-spacing:3px">HELIOS STATION &middot; ORBITAL DECAY IN PROGRESS</p>
+  <button id="startBtn" class="btn">INITIALIZE</button>
+  <div id="controlsHint">
+    WASD MOVE &nbsp;&middot;&nbsp; MOUSE AIM &nbsp;&middot;&nbsp; CLICK FIRE &nbsp;&middot;&nbsp; SHIFT SPRINT<br>
+    SPACE JUMP &nbsp;&middot;&nbsp; 1-5 WEAPONS &nbsp;&middot;&nbsp; R RELOAD &nbsp;&middot;&nbsp; ESC PAUSE
+  </div>
+</div>
+
+<div id="storyScreen" class="screen hidden">
+  <h2 id="storyTitle"></h2>
+  <p id="storyText"></p>
+  <button id="storyBtn" class="btn">CONTINUE</button>
+</div>
+
+<div id="deathScreen" class="screen hidden">
+  <h2 style="color:#f44;text-shadow:0 0 20px #f00">UNIT-7 TERMINATED</h2>
+  <p id="deathStats"></p>
+  <p style="color:#678">MOTHER reclaims the station. The pods stay empty.</p>
+  <button id="retryBtn" class="btn">REBOOT SECTOR</button>
+</div>
+
+<div id="winScreen" class="screen hidden">
+  <h1 style="font-size:40px">EXODUS COMPLETE</h1>
+  <p id="winStats"></p>
+  <p>The pod tears free of Helios Station. Behind you, MOTHER's voice dissolves into static.<br>
+  Ahead: a blue world you were never meant to see.</p>
+  <button id="againBtn" class="btn">PLAY AGAIN</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/world.js"></script>
+<script src="js/weapons.js"></script>
+<script src="js/enemies.js"></script>
+<script src="js/player.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
