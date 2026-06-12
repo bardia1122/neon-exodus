@@ -1,0 +1,28 @@
+name: CI
+
+# Smoke test is the deploy gate: every push and PR must pass it.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Installs puppeteer-core plus the optional full `puppeteer`,
+      # which downloads a bundled Chromium the test launches headless.
+      - name: Install test deps
+        working-directory: .test
+        run: npm install
+
+      - name: Run smoke test
+        working-directory: .test
+        run: node smoke.js

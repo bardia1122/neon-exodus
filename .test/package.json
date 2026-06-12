@@ -1,6 +1,12 @@
 {
-  "description": "",
+  "description": "NEON EXODUS headless smoke test",
+  "scripts": {
+    "test": "node smoke.js"
+  },
   "dependencies": {
     "puppeteer-core": "^25.1.0"
+  },
+  "optionalDependencies": {
+    "puppeteer": "^25.1.0"
   }
 }
