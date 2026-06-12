@@ -70,7 +70,6 @@ const Sfx = (() => {
     jump()    { tone('sine', 300, 500, 0.01, 0.1, 0.12); },
     bossRoar(){ tone('sawtooth', 80, 35, 0.05, 1.2, 0.5); noise(1.0, 0.3, 50, 600); },
 
-    // dark ambient pulse loop — two slow detuned drones + heartbeat
     startMusic() {
       if (musicTimer) return;
       const beat = () => {

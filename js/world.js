@@ -2,8 +2,8 @@
 const World = (() => {
   const ARENA = 46;          // half-size of square arena
   let scene, renderer, camera;
-  const obstacles = [];      // {x, z, r} cylinders for collision
-  const themed = [];         // meshes recolored per sector
+  const obstacles = [];      // {x, z, r} collision cylinders
+  const themed = [];
   let trimMat, pillarGlowMat, fogColor;
 
   const SECTOR_THEMES = [
@@ -42,7 +42,6 @@ const World = (() => {
     trimMat = new THREE.MeshBasicMaterial({ color: 0x00ffd0 });
     pillarGlowMat = new THREE.MeshBasicMaterial({ color: 0x00ffd0 });
 
-    // floor — dark panels with neon grid
     const floor = new THREE.Mesh(
       new THREE.PlaneGeometry(ARENA * 2, ARENA * 2),
       new THREE.MeshStandardMaterial({ color: 0x0a0f14, roughness: 0.85, metalness: 0.4 })
@@ -57,7 +56,6 @@ const World = (() => {
     scene.add(grid);
     themed.push(grid);
 
-    // perimeter walls
     const wallMat = new THREE.MeshStandardMaterial({ color: 0x101820, roughness: 0.7, metalness: 0.5 });
     const wallGeo = new THREE.BoxGeometry(ARENA * 2 + 2, 8, 1);
     [[0, -ARENA, 0], [0, ARENA, 0], [-ARENA, 0, Math.PI / 2], [ARENA, 0, Math.PI / 2]].forEach(([x, z, ry]) => {
@@ -65,14 +63,12 @@ const World = (() => {
       w.position.set(x, 4, z);
       w.rotation.y = ry;
       scene.add(w);
-      // neon trim strip on each wall
       const strip = new THREE.Mesh(new THREE.BoxGeometry(ARENA * 2 + 2, 0.18, 1.06), trimMat);
       strip.position.set(x, 6.5, z);
       strip.rotation.y = ry;
       scene.add(strip);
     });
 
-    // pillars — cover + collision
     const pillarMat = new THREE.MeshStandardMaterial({ color: 0x141c26, roughness: 0.6, metalness: 0.6 });
     const spots = [
       [-22, -22], [22, -22], [-22, 22], [22, 22],
@@ -90,7 +86,6 @@ const World = (() => {
       obstacles.push({ x, z, r: 2.0 });
     });
 
-    // scattered crates
     const crateMat = new THREE.MeshStandardMaterial({ color: 0x1a2433, roughness: 0.8, metalness: 0.3 });
     for (let i = 0; i < 14; i++) {
       const s = 1.4 + Math.random() * 1.4;
@@ -103,7 +98,6 @@ const World = (() => {
       obstacles.push({ x, z, r: s * 0.8 });
     }
 
-    // distant station silhouette ring above
     const halo = new THREE.Mesh(
       new THREE.TorusGeometry(60, 2.5, 8, 48),
       new THREE.MeshBasicMaterial({ color: 0x0a2030, fog: false })
@@ -137,7 +131,7 @@ const World = (() => {
     return t.name;
   }
 
-  // circle-vs-obstacles + arena bounds; mutates pos {x,z}
+  // mutates pos {x,z}
   function collide(pos, radius) {
     const lim = ARENA - 1 - radius;
     pos.x = Math.max(-lim, Math.min(lim, pos.x));
@@ -154,7 +148,6 @@ const World = (() => {
     }
   }
 
-  // ---------- particles (pooled) ----------
   const particles = [];
   function burst(pos, color, count, speed, life, size) {
     const geo = new THREE.BufferGeometry();
@@ -199,7 +192,6 @@ const World = (() => {
     }
   }
 
-  // ---------- pickups ----------
   const pickups = [];
   function spawnPickup(kind, pos) {  // kind: 'health' | 'ammo'
     const color = kind === 'health' ? 0x33ff88 : 0xffaa22;

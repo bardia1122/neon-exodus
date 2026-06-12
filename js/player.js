@@ -35,7 +35,6 @@ const Player = (() => {
   function locked() { return document.pointerLockElement === document.body; }
 
   function update(dt) {
-    // movement input in camera space
     let fx = 0, fz = 0;
     if (keys['KeyW']) fz += 1;
     if (keys['KeyS']) fz -= 1;
@@ -55,18 +54,15 @@ const Player = (() => {
       if (grounded && stepT <= 0) { Sfx.step(); stepT = speed === SPRINT ? 0.27 : 0.38; }
     }
 
-    // jump + gravity
     if (keys['Space'] && grounded) { velY = JUMP; grounded = false; Sfx.jump(); }
     velY -= GRAV * dt;
     position.y += velY * dt;
     if (position.y <= EYE) { position.y = EYE; velY = 0; grounded = true; }
 
-    // collision
     const p = { x: position.x, z: position.z };
     World.collide(p, RADIUS);
     position.x = p.x; position.z = p.z;
 
-    // camera
     camera.position.copy(position);
     camera.rotation.order = 'YXZ';
     camera.rotation.y = yaw;

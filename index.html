@@ -6,6 +6,7 @@
 <title>NEON EXODUS</title>
 <meta name="description" content="NEON EXODUS — a zero-asset, fully procedural neon FPS. Fight your way off a dying space station as UNIT-7. No downloads, runs in your browser.">
 <meta name="theme-color" content="#03121a">
+<link rel="manifest" href="manifest.json">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23021018'/%3E%3Cpath d='M8 24V8l16 16V8' fill='none' stroke='%2333eeff' stroke-width='3' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E">
 
 <!-- Open Graph / social cards -->
@@ -85,23 +86,20 @@
     padding:14px 18px; max-width:680px; max-height:220px; overflow:auto; white-space:pre-wrap; text-align:left; word-break:break-word; }
   #faultScreen .btn { border-color:#c44; color:#f88; text-shadow:0 0 10px #f44; }
   #faultScreen .btn:hover { background:rgba(255,60,60,.12); box-shadow:0 0 24px rgba(255,60,60,.4); }
+
+  #version { position:fixed; right:12px; bottom:10px; z-index:11; color:#345; font-size:11px; letter-spacing:2px; pointer-events:none; }
 </style>
 <script>
-  // Error surface: replace a silent black canvas with a readable fault screen.
-  // Only OUR code should trip it — browser extensions (wallets, ad-blockers) and
-  // other cross-origin scripts inject code that throws on pages we don't control;
-  // those must NOT blank out the game.
   (function () {
     var shown = false;
-
-    // Browser-extension and opaque cross-origin sources we must ignore.
+    // Extension and opaque cross-origin sources must not trip our fault screen.
     var EXT = /^(moz-extension|chrome-extension|safari-web-extension|safari-extension|webkit-masked-url|about):/i;
     function foreign(text) { return !!text && EXT.test(text); }
 
     function showFault(msg) {
       if (shown) return; shown = true;
       var el = document.getElementById('faultScreen');
-      if (!el) { // DOM not ready yet — defer
+      if (!el) {
         window.addEventListener('DOMContentLoaded', function () { showFault(msg); });
         shown = false; return;
       }
@@ -112,10 +110,7 @@
     }
 
     window.addEventListener('error', function (e) {
-      // Ignore errors thrown from extension scripts.
       if (foreign(e && e.filename)) return;
-      // Cross-origin scripts report a bare "Script error." with no details (CORS);
-      // all of our scripts are same-origin, so this is always third-party noise.
       if ((!e || !e.filename) && (!e || e.message === 'Script error.' || !e.message)) return;
       showFault((e && e.message ? e.message : 'Script error') +
         (e && e.filename ? '\n  at ' + e.filename + ':' + e.lineno + ':' + e.colno : ''));
@@ -123,7 +118,7 @@
     window.addEventListener('unhandledrejection', function (e) {
       var r = e && e.reason;
       var stack = (r && r.stack) ? r.stack : '';
-      if (foreign(stack)) return; // rejection bubbled up from an extension
+      if (foreign(stack)) return;
       showFault('Unhandled promise rejection:\n' + (stack || (r && r.message ? r.message : String(r))));
     });
     window.NEON_showFault = showFault;
@@ -161,6 +156,7 @@
     WASD MOVE &nbsp;&middot;&nbsp; MOUSE AIM &nbsp;&middot;&nbsp; CLICK FIRE &nbsp;&middot;&nbsp; SHIFT SPRINT<br>
     SPACE JUMP &nbsp;&middot;&nbsp; 1-5 WEAPONS &nbsp;&middot;&nbsp; R RELOAD &nbsp;&middot;&nbsp; ESC PAUSE
   </div>
+  <div id="version"></div>
 </div>
 
 <div id="storyScreen" class="screen hidden">
@@ -198,5 +194,10 @@
 <script src="js/enemies.js"></script>
 <script src="js/player.js"></script>
 <script src="js/game.js"></script>
+<script>
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+  }
+</script>
 </body>
 </html>

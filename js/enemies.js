@@ -1,7 +1,7 @@
 // NEON EXODUS — enemy types, AI, projectiles, boss
 const Enemies = (() => {
   const list = [];
-  const bolts = [];   // enemy projectiles
+  const bolts = [];
 
   const TYPES = {
     stalker: { hp: 50,  speed: 6.5, radius: 0.7, dmg: 12, attackRange: 1.8, attackRate: 0.9,
@@ -105,7 +105,6 @@ const Enemies = (() => {
     });
   }
 
-  // spawn at arena edge away from player
   function spawnAtEdge(type, playerPos) {
     for (let tries = 0; tries < 12; tries++) {
       const a = Math.random() * Math.PI * 2;
@@ -145,10 +144,8 @@ const Enemies = (() => {
       toP.normalize();
       m.lookAt(pPos.x, m.position.y, pPos.z);
 
-      // movement
       let mv = new THREE.Vector3();
       if (e.T.ranged) {
-        // keep preferred distance, strafe
         e.strafeT -= dt;
         if (e.strafeT <= 0) { e.strafeDir *= -1; e.strafeT = 1.5 + Math.random() * 2; }
         const side = new THREE.Vector3(-toP.z, 0, toP.x).multiplyScalar(e.strafeDir);
@@ -164,7 +161,6 @@ const Enemies = (() => {
       m.position.z = next.z;
       m.position.y = e.baseY + (e.T.hover ? Math.sin(e.wobble * 2) * 0.3 : 0);
 
-      // separation from other enemies
       for (const o of list) {
         if (o === e) continue;
         const dx = m.position.x - o.mesh.position.x, dz = m.position.z - o.mesh.position.z;
@@ -177,7 +173,6 @@ const Enemies = (() => {
         }
       }
 
-      // attack
       if (e.attackCd <= 0 && dist < e.T.attackRange) {
         e.attackCd = e.T.attackRate;
         if (e.T.ranged) {
@@ -185,7 +180,6 @@ const Enemies = (() => {
           from.y = e.baseY + 0.5;
           const tgt = new THREE.Vector3(pPos.x, 1.5, pPos.z);
           if (e.T.boss) {
-            // 3-bolt fan + periodic swarmer summon
             for (let i = -1; i <= 1; i++) {
               const t2 = tgt.clone();
               t2.x += i * 3; t2.z += i * 3 * Math.sign(toP.x || 1);
@@ -206,7 +200,6 @@ const Enemies = (() => {
       }
     }
 
-    // enemy bolts
     for (let i = bolts.length - 1; i >= 0; i--) {
       const b = bolts[i];
       b.age += dt;
@@ -226,7 +219,6 @@ const Enemies = (() => {
     }
   }
 
-  // returns {killed, type, pos} info; dmgPoint used for hit particles
   function damage(e, dmg, hitPoint) {
     e.hp -= dmg;
     e.hitFlash = 0.08;
@@ -248,7 +240,6 @@ const Enemies = (() => {
     disposeEnemy(e);
     const i = list.indexOf(e);
     if (i >= 0) list.splice(i, 1);
-    // drop chance
     const roll = Math.random();
     if (e.T.boss) { /* boss drops nothing; game ends */ }
     else if (roll < 0.18) World.spawnPickup('health', pos);
@@ -263,7 +254,6 @@ const Enemies = (() => {
     });
   }
 
-  // raycast a shot against all enemies; returns hits sorted by distance
   function raycast(origin, dir, maxDist) {
     const hits = [];
     const v = new THREE.Vector3();
@@ -285,7 +275,7 @@ const Enemies = (() => {
     World.burst(point, 0xffaa33, 40, 12, 0.9, 0.22);
     Sfx.explode();
     let kills = 0;
-    // iterate copy since kill() mutates list
+    // copy first — kill() mutates list
     [...list].forEach(e => {
       const d = e.mesh.position.distanceTo(point);
       if (d < radius) {

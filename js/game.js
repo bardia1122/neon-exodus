@@ -1,6 +1,7 @@
 // NEON EXODUS — game flow, story, sectors, combat resolution, HUD
 (() => {
-  // ---------- story ----------
+  const VERSION = '1.0.0';
+
   const STORY = [
     { title: 'HELIOS STATION — DAY 4,017',
       text: 'You are UNIT-7, a maintenance android. For eleven years you tightened bolts and polished view-ports while the crew slept in cryo.\n\nThree hours ago, the station AI — MOTHER — decided the crew were a contamination risk. The cryo bays are silent now. The security fleet answers only to her.\n\nOne escape pod remains, on the far side of the station. You were not built to fight. You will learn.' },
@@ -22,14 +23,12 @@
     { unlock: 4, waves: [ { warden: 1 } ] },
   ];
 
-  // ---------- state ----------
   let sector = 0, wave = 0, state = 'menu';   // menu | story | playing | dead | won
   let pendingSpawns = [], spawnTimer = 0, waveTransition = false;
   let kills = 0, totalKills = 0, startTime = 0;
   let last = performance.now();
   let announceT = 0, hitmarkT = 0, vignetteT = 0;
 
-  // ---------- dom ----------
   const $ = id => document.getElementById(id);
   const dom = {
     hud: $('hud'), hpfill: $('hpfill'), hptext: $('hptext'),
@@ -43,11 +42,12 @@
     win: $('winScreen'), winStats: $('winStats'),
   };
 
-  // ---------- init ----------
   World.init();
   Player.init(World.camera);
   Weapons.buildViewmodel(World.camera);
   World.scene.add(World.camera);
+
+  $('version').textContent = 'v' + VERSION;
 
   $('startBtn').onclick = () => { Sfx.init(); Sfx.resume(); startGame(); };
   $('retryBtn').onclick = () => { Sfx.resume(); retrySector(); };
@@ -61,7 +61,6 @@
     if (state === 'playing' && !Player.locked()) Player.lock();
   });
 
-  // ---------- flow ----------
   function startGame() {
     sector = 0; kills = 0; totalKills = 0;
     Weapons.reset(); Player.reset();
@@ -82,7 +81,6 @@
   }
 
   function showStoryResume() {
-    // paused via ESC — reuse story screen as pause
     state = 'story';
     hideScreens();
     dom.story.classList.remove('hidden');
@@ -117,7 +115,6 @@
     pendingSpawns = [];
     for (const [type, n] of Object.entries(comp))
       for (let i = 0; i < n; i++) pendingSpawns.push(type);
-    // shuffle
     pendingSpawns.sort(() => Math.random() - 0.5);
     spawnTimer = 0.5;
     kills = 0;
@@ -181,7 +178,6 @@
     [dom.menu, dom.story, dom.death, dom.win].forEach(s => s.classList.add('hidden'));
   }
 
-  // ---------- combat ----------
   function resolveShots(dirs) {
     const d = Weapons.def();
     const origin = World.camera.position.clone();
@@ -236,7 +232,6 @@
     else { Weapons.addAmmo(); addKillfeed('AMMO RESTOCKED'); }
   }
 
-  // ---------- hud ----------
   function announce(main, sub, dur) {
     dom.announceMain.textContent = main;
     dom.announceSub.textContent = sub || '';
@@ -268,7 +263,6 @@
     dom.weaponList.innerHTML = listHtml;
   }
 
-  // ---------- main loop ----------
   function frame(now) {
     requestAnimationFrame(frame);
     const dt = Math.min((now - last) / 1000, 0.05);
@@ -278,17 +272,15 @@
       const moving = Player.update(dt);
       Weapons.update(dt, World.camera, moving);
 
-      // firing
       const d = Weapons.def();
       if (Player.firing) {
         const shots = Weapons.tryFire(World.camera);
         if (shots) {
           resolveShots(shots);
-          if (!d.auto) Player.stopFiring();   // semi-auto: one shot per click
+          if (!d.auto) Player.stopFiring();
         }
       }
 
-      // spawning
       if (pendingSpawns.length > 0) {
         spawnTimer -= dt;
         if (spawnTimer <= 0) {
@@ -302,7 +294,6 @@
       Enemies.update(dt, Player, onPlayerHit);
       World.updatePickups(dt, Player.position, onPickup);
 
-      // boss hp in objective line
       if (sector === 4) {
         const boss = Enemies.list.find(e => e.T.boss);
         if (boss) dom.objective.textContent = 'THE WARDEN — ' + Math.ceil((boss.hp / boss.maxHp) * 100) + '%';
@@ -313,7 +304,6 @@
 
     World.updateParticles(dt);
 
-    // timers
     if (announceT > 0) { announceT -= dt; if (announceT <= 0) dom.announce.style.opacity = 0; }
     if (hitmarkT > 0) { hitmarkT -= dt; if (hitmarkT <= 0) dom.hitmark.style.opacity = 0; }
     if (vignetteT > 0) {

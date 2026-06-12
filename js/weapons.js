@@ -68,7 +68,7 @@ const Weapons = (() => {
     st().reloading = 0;
     if (viewmodel) {
       viewmodel.userData.glow.material.color.setHex(DEFS[id].tracer);
-      viewmodel.position.y = -0.45; // raise animation
+      viewmodel.position.y = -0.45;
     }
   }
 
@@ -79,7 +79,6 @@ const Weapons = (() => {
     Sfx.reload();
   }
 
-  // returns array of shot rays [{dir}] or null if couldn't fire
   function tryFire(camera) {
     const d = def(), s = st();
     if (s.cooldown > 0 || s.reloading > 0) return null;
@@ -93,7 +92,7 @@ const Weapons = (() => {
     Sfx[d.sfx]();
     muzzleFlash.color.setHex(d.tracer);
     muzzleFlash.intensity = 2.5;
-    viewmodel.position.z = -0.45; // recoil push
+    viewmodel.position.z = -0.45;
 
     const shots = [];
     const fwd = new THREE.Vector3();
@@ -130,7 +129,6 @@ const Weapons = (() => {
         if (s.reserve !== Infinity) s.reserve -= take;
       }
     }
-    // viewmodel bob + recover
     if (viewmodel) {
       bobT += dt * (moving ? 9 : 2);
       const targetY = -0.24 + Math.sin(bobT) * (moving ? 0.012 : 0.004);
@@ -153,7 +151,6 @@ const Weapons = (() => {
   }
 
   function addAmmo() {
-    // refill 35% of reserve on every owned weapon
     DEFS.forEach((d, i) => {
       if (owned[i] && d.reserve !== Infinity) state[i].reserve = Math.min(d.reserve, state[i].reserve + Math.ceil(d.reserve * 0.35));
     });

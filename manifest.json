@@ -1,0 +1,15 @@
+{
+  "name": "NEON EXODUS",
+  "short_name": "NEON EXODUS",
+  "description": "A zero-asset, fully procedural neon FPS. Fight your way off a dying space station.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "landscape",
+  "background_color": "#000000",
+  "theme_color": "#03121a",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
