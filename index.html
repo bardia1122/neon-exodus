@@ -88,8 +88,16 @@
 </style>
 <script>
   // Error surface: replace a silent black canvas with a readable fault screen.
+  // Only OUR code should trip it — browser extensions (wallets, ad-blockers) and
+  // other cross-origin scripts inject code that throws on pages we don't control;
+  // those must NOT blank out the game.
   (function () {
     var shown = false;
+
+    // Browser-extension and opaque cross-origin sources we must ignore.
+    var EXT = /^(moz-extension|chrome-extension|safari-web-extension|safari-extension|webkit-masked-url|about):/i;
+    function foreign(text) { return !!text && EXT.test(text); }
+
     function showFault(msg) {
       if (shown) return; shown = true;
       var el = document.getElementById('faultScreen');
@@ -102,13 +110,21 @@
       if (m) m.textContent = msg || 'Unknown error';
       el.classList.add('show');
     }
+
     window.addEventListener('error', function (e) {
+      // Ignore errors thrown from extension scripts.
+      if (foreign(e && e.filename)) return;
+      // Cross-origin scripts report a bare "Script error." with no details (CORS);
+      // all of our scripts are same-origin, so this is always third-party noise.
+      if ((!e || !e.filename) && (!e || e.message === 'Script error.' || !e.message)) return;
       showFault((e && e.message ? e.message : 'Script error') +
         (e && e.filename ? '\n  at ' + e.filename + ':' + e.lineno + ':' + e.colno : ''));
     });
     window.addEventListener('unhandledrejection', function (e) {
       var r = e && e.reason;
-      showFault('Unhandled promise rejection:\n' + (r && r.stack ? r.stack : (r && r.message ? r.message : String(r))));
+      var stack = (r && r.stack) ? r.stack : '';
+      if (foreign(stack)) return; // rejection bubbled up from an extension
+      showFault('Unhandled promise rejection:\n' + (stack || (r && r.message ? r.message : String(r))));
     });
     window.NEON_showFault = showFault;
   })();

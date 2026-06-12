@@ -141,7 +141,11 @@ async function launchBrowser() {
       out.killWorks = killed;
       out.afterKill = Enemies.list.length;
 
-      out.explodeKills = Enemies.explodeAt(new THREE.Vector3(0, 1, -13), 8, 300);
+      // Explode on a surviving enemy's actual position (enemies have advanced toward
+      // the player over the 120 AI frames, so a hardcoded point is unreliable).
+      const victim = Enemies.list[0];
+      const blast = victim.mesh.position.clone(); blast.y = 1;
+      out.explodeKills = Enemies.explodeAt(blast, 8, 300);
       out.remaining = Enemies.list.length;
 
       World.updateParticles(1 / 60);
