@@ -42,6 +42,8 @@ jobs:
           cp index.html manifest.json sw.js icon.svg dist/
           cp -r js vendor dist/
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
